@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Emotion Detector</title>
+</head>
+<body>
+    <h1>Webcam Emotion Detection</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="capture">Capture</button>
+
+    <h2>Or upload an image</h2>
+    <input type="file" id="imageUpload" accept="image/*">
+    <button id="uploadImage">Upload Image</button>
+
+    <script>
+        const video = document.getElementById('video');
+        const captureButton = document.getElementById('capture');
+        const uploadButton = document.getElementById('uploadImage');
+        const imageInput = document.getElementById('imageUpload');
+
+        // Setup webcam access
+        if (navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function (stream) {
+                video.srcObject = stream;
+            })
+            .catch(function (error) {
+                console.log("Something went wrong!");
+            });
+        }
+
+        // Capture and send webcam image
+        captureButton.onclick = function() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 640;
+            canvas.height = 480;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(uploadImage);
+        };
+
+        // Upload and send image file
+        uploadButton.onclick = function() {
+            if (imageInput.files.length > 0) {
+                const file = imageInput.files[0];
+                uploadImage(file);
+            } else {
+                alert('Please select an image file first.');
+            }
+        };
+
+        // Common function to handle upload
+        function uploadImage(blob) {
+            const formData = new FormData();
+            formData.append("file", blob, blob.name || "webcam.jpg");
+            fetch('http://localhost:8000/upload/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert("Emotion: " + JSON.stringify(data.emotion));
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
